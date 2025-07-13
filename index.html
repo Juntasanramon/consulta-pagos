@@ -37,14 +37,26 @@
       border: 1px solid #ccc;
       border-radius: 5px;
     }
+    .botones {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
     button {
       background-color: #2563eb;
       color: white;
       padding: 0.7rem 1.5rem;
       font-size: 1rem;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    button:hover {
+      background-color: #1d4ed8;
     }
     .card {
       margin-top: 2rem;
@@ -84,7 +96,10 @@
     <label for="busqueda">Buscar por nombre o cédula:</label>
     <input type="text" id="busqueda" placeholder="Ej. Juan Pérez o 1234567">
 
-    <button onclick="buscarUsuario()">Buscar</button>
+    <div class="botones">
+      <button onclick="buscarUsuario()">🔍 Buscar</button>
+      <button onclick="imprimir()">🖨️ Imprimir</button>
+    </div>
 
     <div id="resultado"></div>
   </main>
@@ -118,7 +133,7 @@
       ).join("");
 
       resultado.innerHTML = `
-        <div class="card">
+        <div class="card" id="card-usuario">
           <h2>${usuario.nombre}</h2>
           <p><strong>Cédula:</strong> ${usuario.cedula}</p>
           <p><strong>Manzana:</strong> ${usuario.manzana} | <strong>Lote:</strong> ${usuario.lote} | <strong>Casa:</strong> ${usuario.casa}</p>
@@ -129,6 +144,23 @@
           <p><strong>Saldo:</strong> ${usuario.saldo_a_pagar}</p>
         </div>
       `;
+    }
+
+    function imprimir() {
+      const contenido = document.getElementById("card-usuario");
+      if (!contenido) {
+        alert("Primero debe realizar una búsqueda.");
+        return;
+      }
+      const ventana = window.open('', '_blank');
+      ventana.document.write(`
+        <html>
+        <head><title>Imprimir Consulta</title></head>
+        <body>${contenido.outerHTML}</body>
+        </html>
+      `);
+      ventana.document.close();
+      ventana.print();
     }
 
     cargarDatos();
