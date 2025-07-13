@@ -18,6 +18,16 @@
       padding: 1rem;
       text-align: center;
     }
+    header img {
+      height: 60px;
+      border-radius: 8px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+    header h1 {
+      display: inline-block;
+      vertical-align: middle;
+    }
     main {
       max-width: 800px;
       margin: 2rem auto;
@@ -74,7 +84,6 @@
       gap: 0.5rem;
     }
     .pago-item {
-      background: #e0f2fe;
       padding: 0.5rem;
       border-radius: 5px;
       text-align: center;
@@ -82,33 +91,9 @@
   </style>
 </head>
 <body>
-
-  <script>
-    function imprimir() {
-      const contenido = document.getElementById("card-usuario");
-      if (!contenido) {
-        alert("Primero debe realizar una búsqueda.");
-        return;
-      }
-      const ventana = window.open('', '_blank');
-      ventana.document.write('<html><head><title>Imprimir Consulta</title>' +
-        '<style>' +
-        'body { font-family: Arial, sans-serif; padding: 2rem; }' +
-        '.pagos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; }' +
-        '.pago-item { background: #f3f4f6; padding: 0.5rem; border-radius: 5px; text-align: center; }' +
-        '</style></head><body>' +
-        "<img src='logo.jpg' alt='San Ramón' style='height: 60px; border-radius: 8px;'><br><br>" +
-        contenido.outerHTML +
-        '</body></html>');
-      ventana.document.close();
-      ventana.print();
-    }
-  </script>
-
   <header>
-    <img src="logo.jpg" alt="San Ramón" style="height: 60px; vertical-align: middle; margin-right: 10px; border-radius: 8px;">
-    <h1 style="display: inline-block; vertical-align: middle;">Consulta de Pagos</h1>
-    <p>Junta de Saneamiento San Ramón</p>
+    <img src="logo.jpg" alt="San Ramón" />
+    <h1>Consulta de Pagos</h1>
   </header>
   <main>
     <label for="anio">Seleccione el año:</label>
@@ -122,7 +107,8 @@
 
     <div class="botones">
       <button onclick="buscarUsuario()">🔍 Buscar</button>
-      <button onclick="imprimir()">🖨️ Imprimir</button><button onclick="descargarPDF()">⬇️ Descargar PDF</button>
+      <button onclick="imprimir()">🖨️ Imprimir</button>
+      <button onclick="descargarPDF()">⬇️ Descargar PDF</button>
     </div>
 
     <div id="resultado"></div>
@@ -130,6 +116,7 @@
 
   <script>
     let datos = {};
+
     async function cargarDatos() {
       const a2024 = await fetch('data2024.json').then(r => r.json());
       const a2025 = await fetch('data2025.json').then(r => r.json());
@@ -141,14 +128,14 @@
       const texto = document.getElementById('busqueda').value.toLowerCase();
       const usuarios = datos[anio];
 
-      
-    const usuario = usuarios.find(u => {
-      u.cedula = u.cedula && u.cedula !== "nan" ? u.cedula : "-";
-      u.casa = u.casa && u.casa !== "nan" ? u.casa : "-";
-      return 
-        u.cedula.toLowerCase().includes(texto) ||
-        u.nombre.toLowerCase().includes(texto)
-      );
+      const usuario = usuarios.find(u => {
+        u.cedula = u.cedula && u.cedula !== "nan" ? u.cedula : "-";
+        u.casa = u.casa && u.casa !== "nan" ? u.casa : "-";
+        return (
+          u.cedula.toLowerCase().includes(texto) ||
+          u.nombre.toLowerCase().includes(texto)
+        );
+      });
 
       const resultado = document.getElementById('resultado');
       if (!usuario) {
@@ -181,59 +168,33 @@
         return;
       }
       const ventana = window.open('', '_blank');
-      ventana.document.write(`
-        <html>
-        <head><title>Imprimir Consulta</title></head>
-        <body>
-
-  <script>
-    function imprimir() {
-      const contenido = document.getElementById("card-usuario");
-      if (!contenido) {
-        alert("Primero debe realizar una búsqueda.");
-        return;
-      }
-      const ventana = window.open('', '_blank');
       ventana.document.write('<html><head><title>Imprimir Consulta</title>' +
-        '<style>' +
-        'body { font-family: Arial, sans-serif; padding: 2rem; }' +
-        '.pagos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; }' +
-        '.pago-item { background: #f3f4f6; padding: 0.5rem; border-radius: 5px; text-align: center; }' +
-        '</style></head><body>' +
+        '<style>body { font-family: Arial, sans-serif; padding: 2rem; } .pagos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; } .pago-item { background: #f3f4f6; padding: 0.5rem; border-radius: 5px; text-align: center; }</style></head><body>' +
         "<img src='logo.jpg' alt='San Ramón' style='height: 60px; border-radius: 8px;'><br><br>" +
         contenido.outerHTML +
         '</body></html>');
       ventana.document.close();
       ventana.print();
     }
-  </script>
-</body>
-        </html>
-      `);
-      ventana.document.close();
-      ventana.print();
+
+    function descargarPDF() {
+      const contenido = document.getElementById("card-usuario");
+      if (!contenido) {
+        alert("Primero debe realizar una búsqueda.");
+        return;
+      }
+      const opciones = {
+        margin:       0.5,
+        filename:     'consulta_usuario.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opciones).from(contenido).save();
     }
 
     cargarDatos();
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
 </html>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
-  function descargarPDF() {
-    const contenido = document.getElementById("card-usuario");
-    if (!contenido) {
-      alert("Primero debe realizar una búsqueda.");
-      return;
-    }
-    const opciones = {
-      margin:       0.5,
-      filename:     'consulta_usuario.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-    html2pdf().set(opciones).from(contenido).save();
-  }
-</script>
