@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Consulta de Pagos - Junta San Ramón</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #2563eb;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    label, select, input {
+      display: block;
+      margin-bottom: 1rem;
+      width: 100%;
+      font-size: 1rem;
+    }
+    input, select {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .botones {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    .card {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background: #f9fafb;
+    }
+    .card h2 {
+      margin-top: 0;
+    }
+    .pagos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.5rem;
+    }
+    .pago-item {
+      background: #e0f2fe;
+      padding: 0.5rem;
+      border-radius: 5px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    function imprimir() {
+      const contenido = document.getElementById("card-usuario");
+      if (!contenido) {
+        alert("Primero debe realizar una búsqueda.");
+        return;
+      }
+      const ventana = window.open('', '_blank');
+      ventana.document.write('<html><head><title>Imprimir Consulta</title>' +
+        '<style>' +
+        'body { font-family: Arial, sans-serif; padding: 2rem; }' +
+        '.pagos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; }' +
+        '.pago-item { background: #f3f4f6; padding: 0.5rem; border-radius: 5px; text-align: center; }' +
+        '</style></head><body>' +
+        "<img src='logo.jpg' alt='San Ramón' style='height: 60px; border-radius: 8px;'><br><br>" +
+        contenido.outerHTML +
+        '</body></html>');
+      ventana.document.close();
+      ventana.print();
+    }
+  </script>
+
+  <header>
+    <img src="logo.jpg" alt="San Ramón" style="height: 60px; vertical-align: middle; margin-right: 10px; border-radius: 8px;">
+    <h1 style="display: inline-block; vertical-align: middle;">Consulta de Pagos</h1>
+    <p>Junta de Saneamiento San Ramón</p>
+  </header>
+  <main>
+    <label for="anio">Seleccione el año:</label>
+    <select id="anio">
+      <option value="2024">2024</option>
+      <option value="2025">2025</option>
+    </select>
+
+    <label for="busqueda">Buscar por nombre o cédula:</label>
+    <input type="text" id="busqueda" placeholder="Ej. Juan Pérez o 1234567">
+
+    <div class="botones">
+      <button onclick="buscarUsuario()">🔍 Buscar</button>
+      <button onclick="imprimir()">🖨️ Imprimir</button><button onclick="descargarPDF()">⬇️ Descargar PDF</button>
+    </div>
+
+    <div id="resultado"></div>
+  </main>
+
+  <script>
+    let datos = {};
+    async function cargarDatos() {
+      const a2024 = await fetch('data2024.json').then(r => r.json());
+      const a2025 = await fetch('data2025.json').then(r => r.json());
+      datos = { "2024": a2024, "2025": a2025 };
+    }
+
+    function buscarUsuario() {
+      const anio = document.getElementById('anio').value;
+      const texto = document.getElementById('busqueda').value.toLowerCase();
+      const usuarios = datos[anio];
+
+      
+    const usuario = usuarios.find(u => {
+      u.cedula = u.cedula && u.cedula !== "nan" ? u.cedula : "-";
+      u.casa = u.casa && u.casa !== "nan" ? u.casa : "-";
+      return 
+        u.cedula.toLowerCase().includes(texto) ||
+        u.nombre.toLowerCase().includes(texto)
+      );
+
+      const resultado = document.getElementById('resultado');
+      if (!usuario) {
+        resultado.innerHTML = "<p>No se encontró el usuario.</p>";
+        return;
+      }
+
+      const pagosHTML = Object.entries(usuario.pagos).map(([mes, valor]) =>
+        `<div class="pago-item" style="background: ${valor.toLowerCase().includes('pagado') ? '#d1fae5' : valor ? '#fee2e2' : '#f3f4f6'}"><strong>${mes}</strong><br>${valor}</div>`
+      ).join("");
+
+      resultado.innerHTML = `
+        <div class="card" id="card-usuario">
+          <h2>${usuario.nombre}</h2>
+          <p><strong>Cédula:</strong> ${usuario.cedula}</p>
+          <p><strong>Manzana:</strong> ${usuario.manzana} | <strong>Lote:</strong> ${usuario.lote} | <strong>Casa:</strong> ${usuario.casa}</p>
+          <h3>Pagos ${anio}</h3>
+          <div class="pagos">${pagosHTML}</div>
+          <p><strong>Total a pagar:</strong> ${usuario.total_a_pagar}</p>
+          <p><strong>Pagado:</strong> ${usuario.pagado}</p>
+          <p><strong>Saldo:</strong> ${usuario.saldo_a_pagar}</p>
+        </div>
+      `;
+    }
+
+    function imprimir() {
+      const contenido = document.getElementById("card-usuario");
+      if (!contenido) {
+        alert("Primero debe realizar una búsqueda.");
+        return;
+      }
+      const ventana = window.open('', '_blank');
+      ventana.document.write(`
+        <html>
+        <head><title>Imprimir Consulta</title></head>
+        <body>
+
+  <script>
+    function imprimir() {
+      const contenido = document.getElementById("card-usuario");
+      if (!contenido) {
+        alert("Primero debe realizar una búsqueda.");
+        return;
+      }
+      const ventana = window.open('', '_blank');
+      ventana.document.write('<html><head><title>Imprimir Consulta</title>' +
+        '<style>' +
+        'body { font-family: Arial, sans-serif; padding: 2rem; }' +
+        '.pagos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; }' +
+        '.pago-item { background: #f3f4f6; padding: 0.5rem; border-radius: 5px; text-align: center; }' +
+        '</style></head><body>' +
+        "<img src='logo.jpg' alt='San Ramón' style='height: 60px; border-radius: 8px;'><br><br>" +
+        contenido.outerHTML +
+        '</body></html>');
+      ventana.document.close();
+      ventana.print();
+    }
+  </script>
+</body>
+        </html>
+      `);
+      ventana.document.close();
+      ventana.print();
+    }
+
+    cargarDatos();
+  </script>
+</body>
+</html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+  function descargarPDF() {
+    const contenido = document.getElementById("card-usuario");
+    if (!contenido) {
+      alert("Primero debe realizar una búsqueda.");
+      return;
+    }
+    const opciones = {
+      margin:       0.5,
+      filename:     'consulta_usuario.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opciones).from(contenido).save();
+  }
+</script>
